@@ -1,34 +1,39 @@
 import streamlit as st
-import fitz  # PyMuPDF
+import pdfplumber
 import pandas as pd
 from io import BytesIO
 
-st.title("PDF Text Extractor")
+st.title("PDF Text Extractor with Bounding Box")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud.  
-v.1.2
+v.1.3 – med pdfplumber och bounding box
 """)
 
 uploaded_files = st.file_uploader("Upload PDF files", type="pdf", accept_multiple_files=True)
 
 def extract_bottom_right_text(pdf_file, filename):
-    doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
     extracted_text = []
 
-    for page_num in range(len(doc)):
-        page = doc.load_page(page_num)
-        blocks = page.get_text("blocks")
+    with pdfplumber.open(pdf_file) as pdf:
+        for page_num, page in enumerate(pdf.pages):
+            width = page.width
+            height = page.height
+            # Define bounding box: bottom 25% and right 20%
+            left = width * 0.80
+            top = height * 0.75
+            right = width
+            bottom = height
 
-        # Sort blocks by their position (bottom right)
-        blocks_sorted = sorted(blocks, key=lambda b: (-b[1], -b[0]))
+            bbox = (left, top, right, bottom)
+            cropped = page.within_bbox(bbox)
+            text = cropped.extract_text()
 
-        if blocks_sorted:
-            bottom_right_block = blocks_sorted[0]
-            extracted_text.append({
-                "File": filename,
-                "Text": bottom_right_block[4]
-            })
+            if text:
+                extracted_text.append({
+                    "File": filename,
+                    "Text": text.strip()
+                })
 
     return extracted_text
 
@@ -48,6 +53,6 @@ if uploaded_files:
     st.download_button(
         label="Download Excel file",
         data=output,
-        file_name="bottom_right_text.xlsx",
+        file_name="pdfplumber_bottom_right_text.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
