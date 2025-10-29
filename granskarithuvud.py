@@ -32,14 +32,12 @@ def extract_metadata(text):
     for line in lines:
         for field in METADATA_FIELDS:
             if line.strip().upper().startswith(field.upper()):
-                # Try to extract value after colon or space
                 parts = line.split(":", 1)
                 if len(parts) == 2:
                     metadata[field] = parts[1].strip()
                 else:
                     metadata[field] = line.replace(field, "").strip()
     return metadata
-
 def extract_text_from_area(pdf_file, filename):
     extracted_rows = []
 
@@ -59,19 +57,8 @@ def extract_text_from_area(pdf_file, filename):
 
             if text:
                 metadata = extract_metadata(text)
-                # Remove metadata lines from main text
-                filtered_lines = [
-                    line for line in text.splitlines()
-                    if not any(line.strip().upper().startswith(field.upper()) for field in METADATA_FIELDS)
-                ]
-                clean_text = "\n".join(filtered_lines).strip()
-
-                row = {
-                    "File": filename,
-                    "Text": clean_text
-                }
-                row.update(metadata)
-                extracted_rows.append(row)
+                metadata["File"] = filename
+                extracted_rows.append(metadata)
 
     return extracted_rows
 
@@ -87,11 +74,10 @@ if uploaded_files:
     df.to_excel(output, index=False, engine='openpyxl')
     output.seek(0)
 
-    st.success("Text and metadata extracted successfully!")
+    st.success("Metadata extracted successfully!")
     st.download_button(
         label="Download Excel file",
         data=output,
-        file_name="metadata_extracted.xlsx",
+        file_name="metadata_only.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
