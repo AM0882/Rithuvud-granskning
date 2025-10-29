@@ -9,7 +9,7 @@ st.title("PDF Text Extractor with Bounding Box")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud.  
-v.1.7 – med jämförelse av filnamn och ritningsnummer
+v.1.8 – med jämförelse av filnamn och ritningsnummer
 """)
 
 # Constants
@@ -66,8 +66,12 @@ def extract_boxes(pdf_file, filename):
 if uploaded_files:
     all_data = []
 
-    for file in uploaded_files:
+    progress_bar = st.progress(0)
+    total_files = len(uploaded_files)
+    
+    for i, file in enumerate(uploaded_files):
         all_data.extend(extract_boxes(file, file.name))
+        progress_bar.progress((i + 1) / total_files)
 
     df = pd.DataFrame(all_data)
 
@@ -101,7 +105,7 @@ if uploaded_files:
 
     st.success("Metadata extracted and compared successfully!")
     st.download_button(
-        label="Download Excel file",
+        label="Ladda ner sammanfattning",
         data=output,
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
