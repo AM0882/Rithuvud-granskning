@@ -5,7 +5,7 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 
-st.title("PDF Text Extractor with Bounding Box")
+st.title("Hämta ut info från rithuvud!")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud.  
@@ -34,7 +34,7 @@ BOXES_MM = {
     "BET": (14.7, 30, 10, 19)
 }
 
-uploaded_files = st.file_uploader("Upload PDF files", type="pdf", accept_multiple_files=True)
+uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
 
 def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
     x1_pt = page_width - x2_mm * MM_TO_PT
@@ -103,10 +103,11 @@ if uploaded_files:
     wb.save(output)
     output.seek(0)
 
-    st.success("Metadata extracted and compared successfully!")
+    st.success("Export och jämförelse färdig!")
     st.download_button(
         label="Ladda ner sammanfattning",
         data=output,
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
