@@ -15,22 +15,21 @@ MM_TO_PT = 2.83465
 
 # Define bounding boxes in mm from bottom-right corner: (x1, x2, y1, y2)
 BOXES_MM = {
-    "STATUS": (0, 30, 0, 10),
-    "HANDLING": (30, 60, 0, 10),
-    "DATUM": (60, 90, 0, 10),
-    "ÄNDRING": (90, 114, 0, 10),
-    "PROJEKT": (0, 57, 10, 20),
-    "ANSVARIG PART": (57, 114, 10, 20),
-    "KONTAKTPERSON": (0, 57, 20, 30),
-    "SKAPAD AV": (57, 114, 20, 30),
-    "GODKÄND AV": (0, 57, 30, 40),
-    "UPPDRAGSNUMMER": (57, 114, 30, 40),
-    "RITNINGSKATEGORI": (0, 57, 40, 50),
-    "INNEHÅLL": (57, 114, 40, 50),
-    "FORMAT": (0, 38, 50, 60),
-    "SKALA": (38, 76, 50, 60),
-    "NUMMER": (76, 114, 50, 60),
-    "BET": (0, 114, 60, 70)
+    "STATUS": (20, 110, 111, 121),
+    "HANDLING": (20, 110, 101, 111),
+    "DATUM": (90, 110, 94, 99),
+    "ÄNDRING": (20, 90, 94, 99),
+    "PROJEKT": (10, 110, 74, 92),
+    "KONTAKTPERSON": (60, 110, 47, 52),
+    "SKAPAD AV": (10, 60, 47, 52),
+    "GODKÄND AV": (60, 110, 40, 45),
+    "UPPDRAGSNUMMER": (10, 60, 40, 45),
+    "RITNINGSKATEGORI": (28.6, 110, 33, 40),
+    "INNEHÅLL": (40, 110, 19, 33),
+    "FORMAT": (10, 30, 26, 31),
+    "SKALA": (17, 30, 19, 26),
+    "NUMMER": (39, 110, 10, 19),
+    "BET": (14.7, 30, 10, 19)
 }
 
 uploaded_files = st.file_uploader("Upload PDF files", type="pdf", accept_multiple_files=True)
@@ -85,3 +84,4 @@ if uploaded_files:
         file_name="metadata_boxes.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
