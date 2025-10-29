@@ -5,7 +5,7 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 
-st.title("Hämta ut info från rithuvud!")
+st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud.  
@@ -110,4 +110,5 @@ if uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
