@@ -1,4 +1,3 @@
-
 import streamlit as st
 import fitz  # PyMuPDF
 import pandas as pd
@@ -8,7 +7,7 @@ st.title("PDF Text Extractor")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud.  
-v.1.1
+v.1.2
 """)
 
 uploaded_files = st.file_uploader("Upload PDF files", type="pdf", accept_multiple_files=True)
@@ -28,7 +27,6 @@ def extract_bottom_right_text(pdf_file, filename):
             bottom_right_block = blocks_sorted[0]
             extracted_text.append({
                 "File": filename,
-                "Page": page_num + 1,
                 "Text": bottom_right_block[4]
             })
 
