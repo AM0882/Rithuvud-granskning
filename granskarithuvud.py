@@ -7,19 +7,41 @@ st.title("PDF Text Extractor with Bounding Box")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud.  
-v.1.4 – med pdfplumber och bounding box
+v.1.5 
 """)
 
-# Convert mm to points
-BOX_WIDTH_PT = 114 * 2.83465
-BOX_HEIGHT_PT = 120 * 2.83465
+# Constants
+MM_TO_PT = 2.83465
+BOX_WIDTH_PT = 114 * MM_TO_PT
+BOX_HEIGHT_PT = 120 * MM_TO_PT
 
-st.title("PDF Text Extractor with pdfplumber")
+# Metadata fields to extract
+METADATA_FIELDS = [
+    "STATUS", "HANDLING", "DATUM", "ÄNDRING", "PROJEKT", "ANSVARIG PART",
+    "KONTAKTPERSON", "SKAPAD AV", "GODKÄND AV", "UPPDRAGSNUMMER",
+    "RITNINGSKATEGORI", "INNEHÅLL", "FORMAT", "SKALA", "NUMMER", "BET"
+]
+
+st.title("PDF Metadata Extractor with pdfplumber")
 
 uploaded_files = st.file_uploader("Upload PDF files", type="pdf", accept_multiple_files=True)
 
+def extract_metadata(text):
+    metadata = {field: "" for field in METADATA_FIELDS}
+    lines = text.splitlines()
+    for line in lines:
+        for field in METADATA_FIELDS:
+            if line.strip().upper().startswith(field.upper()):
+                # Try to extract value after colon or space
+                parts = line.split(":", 1)
+                if len(parts) == 2:
+                    metadata[field] = parts[1].strip()
+                else:
+                    metadata[field] = line.replace(field, "").strip()
+    return metadata
+
 def extract_text_from_area(pdf_file, filename):
-    extracted_text = []
+    extracted_rows = []
 
     with pdfplumber.open(pdf_file) as pdf:
         for page_num, page in enumerate(pdf.pages):
@@ -36,29 +58,40 @@ def extract_text_from_area(pdf_file, filename):
             text = cropped.extract_text()
 
             if text:
-                extracted_text.append({
-                    "File": filename,
-                    "Text": text.strip()
-                })
+                metadata = extract_metadata(text)
+                # Remove metadata lines from main text
+                filtered_lines = [
+                    line for line in text.splitlines()
+                    if not any(line.strip().upper().startswith(field.upper()) for field in METADATA_FIELDS)
+                ]
+                clean_text = "\n".join(filtered_lines).strip()
 
-    return extracted_text
+                row = {
+                    "File": filename,
+                    "Text": clean_text
+                }
+                row.update(metadata)
+                extracted_rows.append(row)
+
+    return extracted_rows
 
 if uploaded_files:
-    all_text_data = []
+    all_data = []
 
     for file in uploaded_files:
-        all_text_data.extend(extract_text_from_area(file, file.name))
+        all_data.extend(extract_text_from_area(file, file.name))
 
-    df = pd.DataFrame(all_text_data)
+    df = pd.DataFrame(all_data)
 
     output = BytesIO()
     df.to_excel(output, index=False, engine='openpyxl')
     output.seek(0)
 
-    st.success("Text extracted successfully!")
+    st.success("Text and metadata extracted successfully!")
     st.download_button(
         label="Download Excel file",
         data=output,
-        file_name="bottom_right_text.xlsx",
+        file_name="metadata_extracted.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
