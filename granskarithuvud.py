@@ -5,7 +5,7 @@ from io import BytesIO
 
 st.title("PDF Text Extractor")
 
-uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
+uploaded_file = st.file_uploader("Upload a PDF file", type="pdf", accept_multiple_files=True)
 
 def extract_bottom_right_text(pdf_file):
     doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
@@ -40,4 +40,5 @@ if uploaded_file:
         data=output,
         file_name="bottom_right_text.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
     )
