@@ -2,12 +2,14 @@ import streamlit as st
 import pdfplumber
 import pandas as pd
 from io import BytesIO
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill
 
 st.title("PDF Text Extractor with Bounding Box")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud.  
-v.1.6
+v.1.7 – med jämförelse av filnamn och ritningsnummer
 """)
 
 # Constants
@@ -25,7 +27,7 @@ BOXES_MM = {
     "GODKÄND AV": (60, 110, 40, 45),
     "UPPDRAGSNUMMER": (10, 60, 40, 45),
     "RITNINGSKATEGORI": (28.6, 110, 33, 40),
-    "INNEHÅLL": (40, 110, 19, 33),
+    "INNEHÅLL": (57, 110, 19, 33),
     "FORMAT": (10, 30, 26, 31),
     "SKALA": (17, 30, 19, 26),
     "NUMMER": (39, 110, 10, 19),
@@ -69,19 +71,38 @@ if uploaded_files:
 
     df = pd.DataFrame(all_data)
 
-    # Remove 'Text' column if present
-    if "Text" in df.columns:
-        df.drop(columns=["Text"], inplace=True)
+    # Create Excel workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Metadata"
 
+    # Write headers
+    ws.append(df.columns.tolist())
+
+    # Define red fill for mismatches
+    red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+
+    # Write data rows with conditional formatting
+    for index, row in df.iterrows():
+        excel_row = [row[col] for col in df.columns]
+        ws.append(excel_row)
+
+        file_val = str(row["File"]).strip().lower().replace(".pdf", "")
+        nummer_val = str(row["NUMMER"]).strip().lower()
+
+        if file_val != nummer_val:
+            cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("NUMMER") + 1)
+            cell.fill = red_fill
+
+    # Save to BytesIO
     output = BytesIO()
-    df.to_excel(output, index=False, engine='openpyxl')
+    wb.save(output)
     output.seek(0)
 
-    st.success("Metadata extracted successfully!")
+    st.success("Metadata extracted and compared successfully!")
     st.download_button(
         label="Download Excel file",
         data=output,
-        file_name="metadata_boxes.xlsx",
+        file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
