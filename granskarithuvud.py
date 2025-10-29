@@ -5,6 +5,11 @@ from io import BytesIO
 
 st.title("PDF Text Extractor")
 
+st.markdown("""
+Ladda upp ritningar och exportera info i rithuvud.
+v.1.0
+""")
+
 uploaded_file = st.file_uploader("Upload a PDF file", type="pdf", accept_multiple_files=True)
 
 def extract_bottom_right_text(pdf_file):
@@ -42,3 +47,4 @@ if uploaded_file:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
     )
+
