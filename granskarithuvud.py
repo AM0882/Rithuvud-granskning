@@ -9,8 +9,8 @@ import time
 st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
-Ladda upp ritningar och exportera info i rithuvud.  
-v.1.11 – med jämförelse av filnamn och ritningsnummer
+Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn.  
+v.1.12
 """)
 
 # Constants
@@ -47,10 +47,10 @@ BOXES_K1_MM = {
     "UPPDRAGSNUMMER": (20, 70, 50, 55),
     "RITNINGSKATEGORI": (38.6, 120, 43, 50),
     "INNEHÅLL": (67, 120, 29, 43),
-    "FORMAT": (20, 40, 36, 41),
-    "SKALA": (27, 40, 29, 36),
-    "NUMMER": (49, 120, 20, 29),
-    "BET": (24.7, 40, 20, 29)
+    "FORMAT": (28.5, 41, 35, 42),
+    "SKALA": (28.5, 41, 28, 36),
+    "NUMMER": (49, 120, 18, 29.5),
+    "BET": (28.5, 41, 18, 29.6)
 }
 
 # Välj koordinatsystem
@@ -129,3 +129,4 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
