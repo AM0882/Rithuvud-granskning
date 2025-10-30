@@ -10,13 +10,13 @@ st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
-v.1.17
+v.1.18
 """)
 
 # Constants
 MM_TO_PT = 2.83465
 
-# Koordinater för rithuvud, K2/3 har marginaler i nedersta hörnan = 10 och 10mm, K1 har 20 och 20 mm. K12 är anpassad för felplottade 5271
+# Koordinater för rithuvud
 BOXES_K2K3_MM = {
     "STATUS": (20, 110, 109, 122),
     "HANDLING": (20, 110, 100, 112),
@@ -52,12 +52,20 @@ uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_f
 
 status_placeholder = st.empty()
 
-def mm_box_to_pdf_bbox_from_bottom_right(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
-    x1_pt = x2_mm * MM_TO_PT
-    x2_pt = x1_mm * MM_TO_PT
+def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
+    # Räkna från nedre högra hörnet
+    x1_pt = page_width - x1_mm * MM_TO_PT
+    x2_pt = page_width - x2_mm * MM_TO_PT
     y1_pt = page_height - y2_mm * MM_TO_PT
     y2_pt = page_height - y1_mm * MM_TO_PT
-    return (page_width - x1_pt, y1_pt, page_width - x2_pt, y2_pt)
+
+    # Säkerställ att x0 < x1 och y0 < y1
+    x0 = min(x1_pt, x2_pt)
+    x1 = max(x1_pt, x2_pt)
+    y0 = min(y1_pt, y2_pt)
+    y1 = max(y1_pt, y2_pt)
+
+    return (x0, y0, x1, y1)
 
 def extract_boxes(pdf_file, filename):
     extracted_rows = []
@@ -67,12 +75,13 @@ def extract_boxes(pdf_file, filename):
             page_height = page.height
             row = {"File": filename}
             for field, (x1_mm, x2_mm, y1_mm, y2_mm) in BOXES_MM.items():
-                bbox = mm_box_to_pdf_bbox_from_bottom_right(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
+                bbox = mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
                 cropped = page.within_bbox(bbox)
                 text = cropped.extract_text()
                 row[field] = text.strip() if text else ""
             extracted_rows.append(row)
     return extracted_rows
+
 # Kör endast när "Starta" trycks
 if st.button("Starta") and uploaded_files:
     status_placeholder.info("Körning pågår...")
@@ -116,8 +125,3 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-
-
-
-
