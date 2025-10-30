@@ -16,7 +16,7 @@ v.1.12
 # Constants
 MM_TO_PT = 2.83465
 
-# Koordinater för rithuvud
+# Koordinater för rithuvud, K2/3 har marginaler i nedersta hörnan = 10 och 10mm, K1 har 20 och 20 mm
 BOXES_K2K3_MM = {
     "STATUS": (20, 110, 111, 121),
     "HANDLING": (20, 110, 101, 111),
@@ -129,6 +129,7 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
 
