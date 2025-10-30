@@ -4,3 +4,5 @@ PyMuPDF
 pandas
 pdfplumber
 openpyxl
+pillow (PIL)
+streamlit-drawable-canvas
