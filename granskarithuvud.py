@@ -10,7 +10,7 @@ st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
-v.1.16
+v.1.17
 """)
 
 # Constants
@@ -52,12 +52,12 @@ uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_f
 
 status_placeholder = st.empty()
 
-def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
-    x1_pt = page_width - x2_mm * MM_TO_PT
-    x2_pt = page_width - x1_mm * MM_TO_PT
+def mm_box_to_pdf_bbox_from_bottom_right(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
+    x1_pt = x2_mm * MM_TO_PT
+    x2_pt = x1_mm * MM_TO_PT
     y1_pt = page_height - y2_mm * MM_TO_PT
     y2_pt = page_height - y1_mm * MM_TO_PT
-    return (x1_pt, y1_pt, x2_pt, y2_pt)
+    return (page_width - x1_pt, y1_pt, page_width - x2_pt, y2_pt)
 
 def extract_boxes(pdf_file, filename):
     extracted_rows = []
@@ -116,6 +116,7 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
 
