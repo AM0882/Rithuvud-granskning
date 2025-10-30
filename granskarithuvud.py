@@ -10,7 +10,7 @@ st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
-v.1.15
+v.1.16
 """)
 
 # Constants
@@ -18,11 +18,11 @@ MM_TO_PT = 2.83465
 
 # Koordinater för rithuvud, K2/3 har marginaler i nedersta hörnan = 10 och 10mm, K1 har 20 och 20 mm. K12 är anpassad för felplottade 5271
 BOXES_K2K3_MM = {
-    "STATUS": (20, 110, 111, 121),
-    "HANDLING": (20, 110, 101, 111),
-    "DATUM": (90, 110, 94, 99),
-    "ÄNDRING": (20, 90, 94, 99),
-    "PROJEKT": (10, 110, 74, 92),
+    "STATUS": (20, 110, 109, 122),
+    "HANDLING": (20, 110, 100, 112),
+    "DATUM": (89, 110, 94, 100),
+    "ÄNDRING": (10, 90, 94, 100),
+    "PROJEKT": (10, 112, 73, 93),
     "KONTAKTPERSON": (60, 110, 47, 52),
     "SKAPAD AV": (10, 60, 47, 52),
     "GODKÄND AV": (60, 110, 40, 45),
@@ -116,5 +116,6 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
