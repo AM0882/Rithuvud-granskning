@@ -10,7 +10,7 @@ st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
-v.1.12
+v.1.13
 """)
 
 # Constants
@@ -53,13 +53,37 @@ BOXES_K1_MM = {
     "BET": (28.5, 41, 18, 29.6)
 }
 
+BOXES_K12_MM = {
+    "STATUS": (29.8, 119.8, 123, 133),
+    "HANDLING": (29.8, 119.8, 113, 123),
+    "DATUM": (99.8, 119.8, 106, 111),
+    "ÄNDRING": (29.8, 99.8, 106, 111),
+    "PROJEKT": (19.8, 119.8, 86, 104),
+    "KONTAKTPERSON": (69.8, 119.8, 59, 64),
+    "SKAPAD AV": (19.8, 69.8, 59, 64),
+    "GODKÄND AV": (69.8, 119.8, 52, 57),
+    "UPPDRAGSNUMMER": (19.8, 69.8, 52, 57),
+    "RITNINGSKATEGORI": (38.4, 119.8, 45, 52),
+    "INNEHÅLL": (66.8, 119.8, 31, 45),
+    "FORMAT": (28.3, 40.8, 37, 44),
+    "SKALA": (28.3, 40.8, 30, 38),
+    "NUMMER": (48.8, 119.8, 20, 31.5),
+    "BET": (28.3, 40.8, 20, 31.6)
+}
+
 # Välj koordinatsystem
 coordinate_option = st.selectbox(
     "Välj koordinatsystem för rithuvud",
-    options=["Helplan", "A1"]
+    options=["Helplan", "A1", "A1-5271"]
 )
 
-BOXES_MM = BOXES_K2K3_MM if coordinate_option == "Helplan" else BOXES_K1_MM
+if coordinate_option == "Helplan":
+    BOXES_MM = BOXES_K2K3_MM
+elif coordinate_option == "A1":
+    BOXES_MM = BOXES_K1_MM
+elif coordinate_option == "A1-5271":
+    BOXES_MM = BOXES_K12_MM
+
 
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
 
@@ -129,6 +153,7 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
 
