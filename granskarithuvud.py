@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pdfplumber
 import pandas as pd
@@ -5,18 +6,15 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 import time
-
 st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
-v.1.14
+v.1.16
 """)
 
-# Constants
 MM_TO_PT = 2.83465
 
-# Koordinater för rithuvud, K2/3 har marginaler i nedersta hörnan = 10 och 10mm, K1 har 20 och 20 mm. K12 är anpassad för felplottade 5271
 BOXES_K2K3_MM = {
     "STATUS": (20, 110, 111, 121),
     "HANDLING": (20, 110, 101, 111),
@@ -71,23 +69,17 @@ BOXES_K12_MM = {
     "BET": (28.3, 40.8, 20, 31.6)
 }
 
-# Välj koordinatsystem
-coordinate_option = st.selectbox(
-    "Välj filstorlek för ritning",
-    options=["Helplan", "A1", "A1-5271"]
-)
-
-if coordinate_option == "Helplan":
-    BOXES_MM = BOXES_K2K3_MM
-elif coordinate_option == "A1":
-    BOXES_MM = BOXES_K1_MM
-elif coordinate_option == "A1-5271":
-    BOXES_MM = BOXES_K12_MM
-
+coordinate_option = st.selectbox("Välj filstorlek för ritning", ["Helplan", "A1", "A1-5271"])
+BOXES_MM = BOXES_K2K3_MM if coordinate_option == "Helplan" else BOXES_K1_MM if coordinate_option == "A1" else BOXES_K12_MM
 
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
-
 status_placeholder = st.empty()
+
+# Input fields for comparison
+st.subheader("Jämför med värden (valfritt)")
+comparison_inputs = {}
+for field in BOXES_MM.keys():
+    comparison_inputs[field] = st.text_input(f"Förväntat värde för '{field}'", "")
 
 def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
     x1_pt = page_width - x2_mm * MM_TO_PT
@@ -110,7 +102,7 @@ def extract_boxes(pdf_file, filename):
                 row[field] = text.strip() if text else ""
             extracted_rows.append(row)
     return extracted_rows
-# Kör endast när "Starta" trycks
+
 if st.button("Starta") and uploaded_files:
     status_placeholder.info("Körning pågår...")
 
@@ -130,14 +122,22 @@ if st.button("Starta") and uploaded_files:
     ws.append(df.columns.tolist())
 
     red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+    green_fill = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")
 
     for index, row in df.iterrows():
         excel_row = [row[col] for col in df.columns]
         ws.append(excel_row)
 
+        for col in df.columns:
+            expected = comparison_inputs.get(col, "").strip().lower()
+            actual = str(row[col]).strip().lower()
+            if expected:
+                cell = ws.cell(row=ws.max_row, column=df.columns.get_loc(col) + 1)
+                cell.fill = green_fill if actual == expected else red_fill
+
+        # Extra comparison: filename vs NUMMER
         file_val = str(row["File"]).strip().lower().replace(".pdf", "")
         nummer_val = str(row["NUMMER"]).strip().lower()
-
         if file_val != nummer_val:
             cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("NUMMER") + 1)
             cell.fill = red_fill
@@ -153,5 +153,3 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-
