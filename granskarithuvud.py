@@ -67,7 +67,7 @@ def extract_boxes(pdf_file, filename):
             page_height = page.height
             row = {"File": filename}
             for field, (x1_mm, x2_mm, y1_mm, y2_mm) in BOXES_MM.items():
-                bbox = mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
+                bbox = mm_box_to_pdf_bbox_from_bottom_right(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
                 cropped = page.within_bbox(bbox)
                 text = cropped.extract_text()
                 row[field] = text.strip() if text else ""
@@ -116,6 +116,7 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
 
