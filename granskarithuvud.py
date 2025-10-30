@@ -73,7 +73,7 @@ BOXES_K12_MM = {
 
 # Välj koordinatsystem
 coordinate_option = st.selectbox(
-    "Välj koordinatsystem för rithuvud",
+    "Välj filstorlek för ritning",
     options=["Helplan", "A1", "A1-5271"]
 )
 
@@ -153,9 +153,5 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-
-
-
 
 
