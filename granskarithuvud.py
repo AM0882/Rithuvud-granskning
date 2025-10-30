@@ -4,13 +4,31 @@ import pandas as pd
 from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
+import time
 
 st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. 
-v.1.9 – med jämförelse av filnamn och ritningsnummer
+v.1.10 – med jämförelse av filnamn och ritningsnummer
 """)
+
+# Statusindikator
+status_placeholder = st.empty()
+
+# Startknapp
+if st.button("Starta"):
+    status_placeholder.info("Körning pågår...")
+    
+    # Simulerad körning
+    with st.spinner("Bearbetar PDF..."):
+        time.sleep(3)  # Ersätt med din bearbetningsfunktion
+
+    status_placeholder.success("Klar!")
+
+# Stoppknapp
+if st.button("Stoppa"):
+    status_placeholder.warning("Körning stoppad.")
 
 # Constants
 MM_TO_PT = 2.83465
@@ -141,6 +159,7 @@ if uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
 
