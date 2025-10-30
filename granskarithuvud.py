@@ -8,7 +8,7 @@ from openpyxl.styles import PatternFill
 st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
-Ladda upp ritningar och exportera info i rithuvud. Anpassad efter K2/K3.  
+Ladda upp ritningar och exportera info i rithuvud. 
 v.1.9 – med jämförelse av filnamn och ritningsnummer
 """)
 
@@ -141,4 +141,5 @@ if uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
