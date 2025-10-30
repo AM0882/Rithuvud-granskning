@@ -10,13 +10,13 @@ st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
-v.1.13
+v.1.14
 """)
 
 # Constants
 MM_TO_PT = 2.83465
 
-# Koordinater för rithuvud, K2/3 har marginaler i nedersta hörnan = 10 och 10mm, K1 har 20 och 20 mm
+# Koordinater för rithuvud, K2/3 har marginaler i nedersta hörnan = 10 och 10mm, K1 har 20 och 20 mm. K12 är anpassad för felplottade 5271
 BOXES_K2K3_MM = {
     "STATUS": (20, 110, 111, 121),
     "HANDLING": (20, 110, 101, 111),
@@ -56,9 +56,9 @@ BOXES_K1_MM = {
 BOXES_K12_MM = {
     "STATUS": (29.8, 119.8, 123, 133),
     "HANDLING": (29.8, 119.8, 113, 123),
-    "DATUM": (99.8, 119.8, 106, 111),
-    "ÄNDRING": (29.8, 99.8, 106, 111),
-    "PROJEKT": (19.8, 119.8, 86, 104),
+    "DATUM": (93.5, 119.8, 106, 111),
+    "ÄNDRING": (29.8, 93.5, 106, 111),
+    "PROJEKT": (29, 119.8, 86, 106),
     "KONTAKTPERSON": (69.8, 119.8, 59, 64),
     "SKAPAD AV": (19.8, 69.8, 59, 64),
     "GODKÄND AV": (69.8, 119.8, 52, 57),
@@ -66,7 +66,7 @@ BOXES_K12_MM = {
     "RITNINGSKATEGORI": (38.4, 119.8, 45, 52),
     "INNEHÅLL": (66.8, 119.8, 31, 45),
     "FORMAT": (28.3, 40.8, 37, 44),
-    "SKALA": (28.3, 40.8, 30, 38),
+    "SKALA": (30.9, 40.8, 30, 38),
     "NUMMER": (48.8, 119.8, 20, 31.5),
     "BET": (28.3, 40.8, 20, 31.6)
 }
@@ -153,6 +153,7 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
 
