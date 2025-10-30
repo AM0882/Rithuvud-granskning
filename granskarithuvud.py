@@ -13,23 +13,6 @@ Ladda upp ritningar och exportera info i rithuvud.
 v.1.10 – med jämförelse av filnamn och ritningsnummer
 """)
 
-# Statusindikator
-status_placeholder = st.empty()
-
-# Startknapp
-if st.button("Starta"):
-    status_placeholder.info("Körning pågår...")
-    
-    # Simulerad körning
-    with st.spinner("Bearbetar PDF..."):
-        time.sleep(3)  # Ersätt med din bearbetningsfunktion
-
-    status_placeholder.success("Klar!")
-
-# Stoppknapp
-if st.button("Stoppa"):
-    status_placeholder.warning("Körning stoppad.")
-
 # Constants
 MM_TO_PT = 2.83465
 
@@ -84,6 +67,23 @@ else:
     BOXES_MM = BOXES_K1_MM
 
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
+
+# Statusindikator
+status_placeholder = st.empty()
+
+# Startknapp
+if st.button("Starta"):
+    status_placeholder.info("Körning pågår...")
+    
+    # Simulerad körning
+    with st.spinner("Bearbetar PDF..."):
+        time.sleep(3)  # Ersätt med din bearbetningsfunktion
+
+    status_placeholder.success("Klar!")
+
+# Stoppknapp
+if st.button("Stoppa"):
+    status_placeholder.warning("Körning stoppad.")
 
 def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
     x1_pt = page_width - x2_mm * MM_TO_PT
@@ -159,6 +159,7 @@ if uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
 
