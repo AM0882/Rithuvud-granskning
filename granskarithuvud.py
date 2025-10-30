@@ -9,14 +9,14 @@ st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Anpassad efter K2/K3.  
-v.1.8 – med jämförelse av filnamn och ritningsnummer
+v.1.9 – med jämförelse av filnamn och ritningsnummer
 """)
 
 # Constants
 MM_TO_PT = 2.83465
 
-# Define bounding boxes in mm from bottom-right corner: (x1, x2, y1, y2)
-BOXES_MM = {
+# Step 1: Lägg in koordinater för rutorna i rithuvudet
+BOXES_K2K3_MM = {
     "STATUS": (20, 110, 111, 121),
     "HANDLING": (20, 110, 101, 111),
     "DATUM": (90, 110, 94, 99),
@@ -33,6 +33,37 @@ BOXES_MM = {
     "NUMMER": (39, 110, 10, 19),
     "BET": (14.7, 30, 10, 19)
 }
+
+BOXES_K1_MM = {
+    "STATUS": (30, 120, 121, 131),
+    "HANDLING": (30, 120, 111, 121),
+    "DATUM": (100, 120, 104, 109),
+    "ÄNDRING": (30, 100, 104, 109),
+    "PROJEKT": (20, 120, 84, 102),
+    "KONTAKTPERSON": (70, 120, 57, 62),
+    "SKAPAD AV": (20, 70, 57, 62),
+    "GODKÄND AV": (70, 120, 50, 55),
+    "UPPDRAGSNUMMER": (20, 70, 50, 55),
+    "RITNINGSKATEGORI": (38.6, 120, 43, 50),
+    "INNEHÅLL": (67, 120, 29, 43),
+    "FORMAT": (20, 40, 36, 41),
+    "SKALA": (27, 40, 29, 36),
+    "NUMMER": (49, 120, 20, 29),
+    "BET": (24.7, 40, 20, 29)
+}
+
+
+# Step 2: Add dropdown to select coordinate set
+coordinate_option = st.selectbox(
+    "Välj koordinatsystem för rithuvud",
+    options=["K2/K3", "K1"]
+)
+
+# Step 3: Use selected set
+if coordinate_option == "K2/K3":
+    BOXES_MM = BOXES_K2K3_MM
+else:
+    BOXES_MM = BOXES_K1_MM
 
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
 
@@ -110,6 +141,4 @@ if uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-
 
