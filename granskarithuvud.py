@@ -4,19 +4,20 @@ import pandas as pd
 from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
+import time
 
 st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
-Ladda upp ritningar och exportera info i rithuvud.  
-v.1.10 – med jämförelse av filnamn och ritningsnummer
+Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
+v.1.14
 """)
 
 # Constants
 MM_TO_PT = 2.83465
 
-# Define bounding boxes in mm from bottom-right corner: (x1, x2, y1, y2)
-BOXES_MM = {
+# Koordinater för rithuvud, K2/3 har marginaler i nedersta hörnan = 10 och 10mm, K1 har 20 och 20 mm. K12 är anpassad för felplottade 5271
+BOXES_K2K3_MM = {
     "STATUS": (20, 110, 111, 121),
     "HANDLING": (20, 110, 101, 111),
     "DATUM": (90, 110, 94, 99),
@@ -34,7 +35,59 @@ BOXES_MM = {
     "BET": (14.7, 30, 10, 19)
 }
 
+BOXES_K1_MM = {
+    "STATUS": (30, 120, 121, 131),
+    "HANDLING": (30, 120, 111, 121),
+    "DATUM": (100, 120, 104, 109),
+    "ÄNDRING": (30, 100, 104, 109),
+    "PROJEKT": (20, 120, 84, 102),
+    "KONTAKTPERSON": (70, 120, 57, 62),
+    "SKAPAD AV": (20, 70, 57, 62),
+    "GODKÄND AV": (70, 120, 50, 55),
+    "UPPDRAGSNUMMER": (20, 70, 50, 55),
+    "RITNINGSKATEGORI": (38.6, 120, 43, 50),
+    "INNEHÅLL": (67, 120, 29, 43),
+    "FORMAT": (28.5, 41, 35, 42),
+    "SKALA": (28.5, 41, 28, 36),
+    "NUMMER": (49, 120, 18, 29.5),
+    "BET": (28.5, 41, 18, 29.6)
+}
+
+BOXES_K12_MM = {
+    "STATUS": (29.8, 119.8, 123, 133),
+    "HANDLING": (29.8, 119.8, 113, 123),
+    "DATUM": (93.5, 119.8, 106, 111),
+    "ÄNDRING": (29.8, 93.5, 106, 111),
+    "PROJEKT": (29, 119.8, 86, 106),
+    "KONTAKTPERSON": (69.8, 119.8, 59, 64),
+    "SKAPAD AV": (19.8, 69.8, 59, 64),
+    "GODKÄND AV": (69.8, 119.8, 52, 57),
+    "UPPDRAGSNUMMER": (19.8, 69.8, 52, 57),
+    "RITNINGSKATEGORI": (38.4, 119.8, 45, 52),
+    "INNEHÅLL": (66.8, 119.8, 31, 45),
+    "FORMAT": (28.3, 40.8, 37, 44),
+    "SKALA": (30.9, 40.8, 30, 38),
+    "NUMMER": (48.8, 119.8, 20, 31.5),
+    "BET": (28.3, 40.8, 20, 31.6)
+}
+
+# Välj koordinatsystem
+coordinate_option = st.selectbox(
+    "Välj filstorlek för ritning",
+    options=["Helplan", "A1", "A1-5271"]
+)
+
+if coordinate_option == "Helplan":
+    BOXES_MM = BOXES_K2K3_MM
+elif coordinate_option == "A1":
+    BOXES_MM = BOXES_K1_MM
+elif coordinate_option == "A1-5271":
+    BOXES_MM = BOXES_K12_MM
+
+
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
+
+status_placeholder = st.empty()
 
 def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
     x1_pt = page_width - x2_mm * MM_TO_PT
@@ -43,62 +96,41 @@ def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
     y2_pt = page_height - y1_mm * MM_TO_PT
     return (x1_pt, y1_pt, x2_pt, y2_pt)
 
-def is_bbox_valid(bbox, page_width, page_height):
-    x1, y1, x2, y2 = bbox
-    return 0 <= x1 < x2 <= page_width and 0 <= y1 < y2 <= page_height
-
 def extract_boxes(pdf_file, filename):
     extracted_rows = []
-
     with pdfplumber.open(pdf_file) as pdf:
         for page in pdf.pages:
             page_width = page.width
             page_height = page.height
-
             row = {"File": filename}
-
             for field, (x1_mm, x2_mm, y1_mm, y2_mm) in BOXES_MM.items():
                 bbox = mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
-
-                if not is_bbox_valid(bbox, page_width, page_height):
-                    row[field] = "[Ogiltig bbox]"
-                    continue
-
-                try:
-                    cropped = page.within_bbox(bbox)
-                    text = cropped.extract_text()
-                    row[field] = text.strip() if text else ""
-                except Exception as e:
-                    row[field] = f"[Fel vid läsning]"
-
+                cropped = page.within_bbox(bbox)
+                text = cropped.extract_text()
+                row[field] = text.strip() if text else ""
             extracted_rows.append(row)
-
     return extracted_rows
+# Kör endast när "Starta" trycks
+if st.button("Starta") and uploaded_files:
+    status_placeholder.info("Körning pågår...")
 
-if uploaded_files:
     all_data = []
-
     progress_bar = st.progress(0)
     total_files = len(uploaded_files)
-    
+
     for i, file in enumerate(uploaded_files):
         all_data.extend(extract_boxes(file, file.name))
         progress_bar.progress((i + 1) / total_files)
 
     df = pd.DataFrame(all_data)
 
-    # Create Excel workbook
     wb = Workbook()
     ws = wb.active
     ws.title = "Metadata"
-
-    # Write headers
     ws.append(df.columns.tolist())
 
-    # Define red fill for mismatches
     red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
 
-    # Write data rows with conditional formatting
     for index, row in df.iterrows():
         excel_row = [row[col] for col in df.columns]
         ws.append(excel_row)
@@ -110,15 +142,16 @@ if uploaded_files:
             cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("NUMMER") + 1)
             cell.fill = red_fill
 
-    # Save to BytesIO
     output = BytesIO()
     wb.save(output)
     output.seek(0)
 
-    st.success("Export och jämförelse färdig!")
+    status_placeholder.success("Export och jämförelse färdig!")
     st.download_button(
         label="Ladda ner sammanfattning",
         data=output,
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+
