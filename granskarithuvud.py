@@ -56,11 +56,11 @@ BOXES_K1_MM = {
 # Step 2: Add dropdown to select coordinate set
 coordinate_option = st.selectbox(
     "Välj koordinatsystem för rithuvud",
-    options=["K2/K3", "K1"]
+    options=["Helplan", "A1"]
 )
 
 # Step 3: Use selected set
-if coordinate_option == "K2/K3":
+if coordinate_option == "Helplan":
     BOXES_MM = BOXES_K2K3_MM
 else:
     BOXES_MM = BOXES_K1_MM
@@ -141,5 +141,6 @@ if uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 
