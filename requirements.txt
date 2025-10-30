@@ -3,6 +3,3 @@ streamlit
 pandas
 pdfplumber
 openpyxl
-pillow
-streamlit-drawable-canvas
-
