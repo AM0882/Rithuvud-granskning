@@ -9,7 +9,7 @@ st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud.  
-v.1.8 – med jämförelse av filnamn och ritningsnummer
+v.1.10 – med jämförelse av filnamn och ritningsnummer
 """)
 
 # Constants
@@ -43,6 +43,10 @@ def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
     y2_pt = page_height - y1_mm * MM_TO_PT
     return (x1_pt, y1_pt, x2_pt, y2_pt)
 
+def is_bbox_valid(bbox, page_width, page_height):
+    x1, y1, x2, y2 = bbox
+    return 0 <= x1 < x2 <= page_width and 0 <= y1 < y2 <= page_height
+
 def extract_boxes(pdf_file, filename):
     extracted_rows = []
 
@@ -55,9 +59,17 @@ def extract_boxes(pdf_file, filename):
 
             for field, (x1_mm, x2_mm, y1_mm, y2_mm) in BOXES_MM.items():
                 bbox = mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
-                cropped = page.within_bbox(bbox)
-                text = cropped.extract_text()
-                row[field] = text.strip() if text else ""
+
+                if not is_bbox_valid(bbox, page_width, page_height):
+                    row[field] = "[Ogiltig bbox]"
+                    continue
+
+                try:
+                    cropped = page.within_bbox(bbox)
+                    text = cropped.extract_text()
+                    row[field] = text.strip() if text else ""
+                except Exception as e:
+                    row[field] = f"[Fel vid läsning]"
 
             extracted_rows.append(row)
 
