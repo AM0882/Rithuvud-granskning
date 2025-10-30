@@ -9,14 +9,14 @@ import time
 st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
-Ladda upp ritningar och exportera info i rithuvud. 
-v.1.10 – med jämförelse av filnamn och ritningsnummer
+Ladda upp ritningar och exportera info i rithuvud.  
+v.1.11 – med jämförelse av filnamn och ritningsnummer
 """)
 
 # Constants
 MM_TO_PT = 2.83465
 
-# Step 1: Lägg in koordinater för rutorna i rithuvudet
+# Koordinater för rithuvud
 BOXES_K2K3_MM = {
     "STATUS": (20, 110, 111, 121),
     "HANDLING": (20, 110, 101, 111),
@@ -53,37 +53,17 @@ BOXES_K1_MM = {
     "BET": (24.7, 40, 20, 29)
 }
 
-
-# Step 2: Add dropdown to select coordinate set
+# Välj koordinatsystem
 coordinate_option = st.selectbox(
     "Välj koordinatsystem för rithuvud",
     options=["Helplan", "A1"]
 )
 
-# Step 3: Use selected set
-if coordinate_option == "Helplan":
-    BOXES_MM = BOXES_K2K3_MM
-else:
-    BOXES_MM = BOXES_K1_MM
+BOXES_MM = BOXES_K2K3_MM if coordinate_option == "Helplan" else BOXES_K1_MM
 
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
 
-# Statusindikator
 status_placeholder = st.empty()
-
-# Startknapp
-if st.button("Starta"):
-    status_placeholder.info("Körning pågår...")
-    
-    # Simulerad körning
-    with st.spinner("Bearbetar PDF..."):
-        time.sleep(3)  # Ersätt med din bearbetningsfunktion
-
-    status_placeholder.success("Klar!")
-
-# Stoppknapp
-if st.button("Stoppa"):
-    status_placeholder.warning("Körning stoppad.")
 
 def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
     x1_pt = page_width - x2_mm * MM_TO_PT
@@ -94,48 +74,39 @@ def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
 
 def extract_boxes(pdf_file, filename):
     extracted_rows = []
-
     with pdfplumber.open(pdf_file) as pdf:
         for page in pdf.pages:
             page_width = page.width
             page_height = page.height
-
             row = {"File": filename}
-
             for field, (x1_mm, x2_mm, y1_mm, y2_mm) in BOXES_MM.items():
                 bbox = mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
                 cropped = page.within_bbox(bbox)
                 text = cropped.extract_text()
                 row[field] = text.strip() if text else ""
-
             extracted_rows.append(row)
-
     return extracted_rows
+# Kör endast när "Starta" trycks
+if st.button("Starta") and uploaded_files:
+    status_placeholder.info("Körning pågår...")
 
-if uploaded_files:
     all_data = []
-
     progress_bar = st.progress(0)
     total_files = len(uploaded_files)
-    
+
     for i, file in enumerate(uploaded_files):
         all_data.extend(extract_boxes(file, file.name))
         progress_bar.progress((i + 1) / total_files)
 
     df = pd.DataFrame(all_data)
 
-    # Create Excel workbook
     wb = Workbook()
     ws = wb.active
     ws.title = "Metadata"
-
-    # Write headers
     ws.append(df.columns.tolist())
 
-    # Define red fill for mismatches
     red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
 
-    # Write data rows with conditional formatting
     for index, row in df.iterrows():
         excel_row = [row[col] for col in df.columns]
         ws.append(excel_row)
@@ -147,20 +118,14 @@ if uploaded_files:
             cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("NUMMER") + 1)
             cell.fill = red_fill
 
-    # Save to BytesIO
     output = BytesIO()
     wb.save(output)
     output.seek(0)
 
-    st.success("Export och jämförelse färdig!")
+    status_placeholder.success("Export och jämförelse färdig!")
     st.download_button(
         label="Ladda ner sammanfattning",
         data=output,
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-
-
-
-
