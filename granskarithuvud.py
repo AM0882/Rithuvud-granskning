@@ -6,7 +6,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 import time
 
-st.title("Hämta ut info från rithuvud")
+st.title("Hämta ut och jämför info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
@@ -71,66 +71,48 @@ BOXES_K12_MM = {
     "BET": (28.3, 40.8, 20, 31.6)
 }
 
-# Välj koordinatsystem
-coordinate_option = st.selectbox(
-    "Välj filstorlek för ritning",
-    options=["Helplan", "A1", "A1-5271"]
-)
-
-if coordinate_option == "Helplan":
-    BOXES_MM = BOXES_K2K3_MM
-elif coordinate_option == "A1":
-    BOXES_MM = BOXES_K1_MM
-elif coordinate_option == "A1-5271":
-    BOXES_MM = BOXES_K12_MM
+coordinate_option = st.selectbox("Välj filstorlek för ritning", ["Helplan", "A1", "A1-5271"])
+BOXES_MM = {"Helplan": BOXES_K2K3_MM, "A1": BOXES_K1_MM, "A1-5271": BOXES_K12_MM}[coordinate_option]
 
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
-
 status_placeholder = st.empty()
 
+st.markdown("### Förväntade värden för jämförelse")
+expected_values = {field: st.text_input(f"Förväntat värde för {field}", "") for field in BOXES_MM}
+
 def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
-    # Räkna från nedre högra hörnet
     x1_pt = page_width - x1_mm * MM_TO_PT
     x2_pt = page_width - x2_mm * MM_TO_PT
     y1_pt = page_height - y2_mm * MM_TO_PT
     y2_pt = page_height - y1_mm * MM_TO_PT
-
-    # Säkerställ att x0 < x1 och y0 < y1
-    x0 = min(x1_pt, x2_pt)
-    x1 = max(x1_pt, x2_pt)
-    y0 = min(y1_pt, y2_pt)
-    y1 = max(y1_pt, y2_pt)
-
-    return (x0, y0, x1, y1)
+    return (min(x1_pt, x2_pt), min(y1_pt, y2_pt), max(x1_pt, x2_pt), max(y1_pt, y2_pt))
 
 def extract_boxes(pdf_file, filename):
     extracted_rows = []
     with pdfplumber.open(pdf_file) as pdf:
         for page in pdf.pages:
-            page_width = page.width
-            page_height = page.height
             row = {"File": filename}
             for field, (x1_mm, x2_mm, y1_mm, y2_mm) in BOXES_MM.items():
-                bbox = mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
+                bbox = mm_box_to_pdf_bbox(page.width, page.height, x1_mm, x2_mm, y1_mm, y2_mm)
                 cropped = page.within_bbox(bbox)
                 text = cropped.extract_text()
                 row[field] = text.strip() if text else ""
             extracted_rows.append(row)
     return extracted_rows
 
-# Kör endast när "Starta" trycks
 if st.button("Starta") and uploaded_files:
     status_placeholder.info("Körning pågår...")
-
     all_data = []
     progress_bar = st.progress(0)
-    total_files = len(uploaded_files)
-
     for i, file in enumerate(uploaded_files):
         all_data.extend(extract_boxes(file, file.name))
-        progress_bar.progress((i + 1) / total_files)
+        progress_bar.progress((i + 1) / len(uploaded_files))
 
     df = pd.DataFrame(all_data)
+
+    # Visa förhandsgranskning
+    st.markdown("### Förhandsvisning av extraherad data")
+    st.dataframe(df)
 
     wb = Workbook()
     ws = wb.active
@@ -138,17 +120,25 @@ if st.button("Starta") and uploaded_files:
     ws.append(df.columns.tolist())
 
     red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+    green_fill = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")
 
-    for index, row in df.iterrows():
-        excel_row = [row[col] for col in df.columns]
-        ws.append(excel_row)
+    for _, row in df.iterrows():
+        ws.append([row[col] for col in df.columns])
+        for col in df.columns:
+            if col == "File":
+                continue
+            expected = expected_values.get(col, "").strip().lower()
+            actual = str(row[col]).strip().lower()
+            if expected:
+                cell = ws.cell(row=ws.max_row, column=df.columns.get_loc(col) + 1)
+                cell.fill = green_fill if expected == actual else red_fill
 
-        file_val = str(row["File"]).strip().lower().replace(".pdf", "")
-        nummer_val = str(row["NUMMER"]).strip().lower()
-
-        if file_val != nummer_val:
-            cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("NUMMER") + 1)
-            cell.fill = red_fill
+        if not expected_values["NUMMER"]:
+            file_val = str(row["File"]).strip().lower().replace(".pdf", "")
+            nummer_val = str(row["NUMMER"]).strip().lower()
+            if file_val != nummer_val:
+                cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("NUMMER") + 1)
+                cell.fill = red_fill
 
     output = BytesIO()
     wb.save(output)
