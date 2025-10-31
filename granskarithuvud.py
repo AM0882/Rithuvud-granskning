@@ -15,11 +15,11 @@ v.2.1
 MM_TO_PT = 2.83465
 
 BOXES_K2K3_MM = {
-    "STATUS": (20, 110, 111, 121),
-    "HANDLING": (20, 110, 101, 111),
-    "DATUM": (90, 110, 94, 99),
-    "ÄNDRING": (20, 90, 94, 99),
-    "PROJEKT": (10, 110, 74, 92),
+    "STATUS": (20, 110, 109, 122),
+    "HANDLING": (20, 110, 100, 112),
+    "DATUM": (89, 110, 94, 100),
+    "ÄNDRING": (10, 90, 94, 100),
+    "PROJEKT": (10, 112, 73, 93),
     "KONTAKTPERSON": (60, 110, 47, 52),
     "SKAPAD AV": (10, 60, 47, 52),
     "GODKÄND AV": (60, 110, 40, 45),
@@ -153,4 +153,5 @@ if st.button("Starta") and uploaded_files:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
     )
+
 
