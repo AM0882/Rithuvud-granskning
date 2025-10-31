@@ -5,24 +5,21 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 import time
-
-st.title("Hämta ut och jämför info från rithuvud")
+st.title("Hämta ut info från rithuvud och granska")
 
 st.markdown("""
-Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
-v.1.22
+Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
+v.2.1
 """)
 
-# Constants
 MM_TO_PT = 2.83465
 
-# Koordinater för rithuvud
 BOXES_K2K3_MM = {
-    "STATUS": (20, 110, 109, 122),
-    "HANDLING": (20, 110, 100, 112),
-    "DATUM": (89, 110, 94, 100),
-    "ÄNDRING": (10, 90, 94, 100),
-    "PROJEKT": (10, 112, 73, 93),
+    "STATUS": (20, 110, 111, 121),
+    "HANDLING": (20, 110, 101, 111),
+    "DATUM": (90, 110, 94, 99),
+    "ÄNDRING": (20, 90, 94, 99),
+    "PROJEKT": (10, 110, 74, 92),
     "KONTAKTPERSON": (60, 110, 47, 52),
     "SKAPAD AV": (10, 60, 47, 52),
     "GODKÄND AV": (60, 110, 40, 45),
@@ -72,28 +69,33 @@ BOXES_K12_MM = {
 }
 
 coordinate_option = st.selectbox("Välj filstorlek för ritning", ["Helplan", "A1", "A1-5271"])
-BOXES_MM = {"Helplan": BOXES_K2K3_MM, "A1": BOXES_K1_MM, "A1-5271": BOXES_K12_MM}[coordinate_option]
+BOXES_MM = BOXES_K2K3_MM if coordinate_option == "Helplan" else BOXES_K1_MM if coordinate_option == "A1" else BOXES_K12_MM
 
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
 status_placeholder = st.empty()
 
-st.markdown("### Förväntade värden för jämförelse")
-expected_values = {field: st.text_input(f"Förväntat värde för {field}", "") for field in BOXES_MM}
+# Input fields for comparison
+st.subheader("Jämför med värden (valfritt)")
+comparison_inputs = {}
+for field in BOXES_MM.keys():
+    comparison_inputs[field] = st.text_input(f"Förväntat värde för '{field}'", "")
 
 def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
-    x1_pt = page_width - x1_mm * MM_TO_PT
-    x2_pt = page_width - x2_mm * MM_TO_PT
+    x1_pt = page_width - x2_mm * MM_TO_PT
+    x2_pt = page_width - x1_mm * MM_TO_PT
     y1_pt = page_height - y2_mm * MM_TO_PT
     y2_pt = page_height - y1_mm * MM_TO_PT
-    return (min(x1_pt, x2_pt), min(y1_pt, y2_pt), max(x1_pt, x2_pt), max(y1_pt, y2_pt))
+    return (x1_pt, y1_pt, x2_pt, y2_pt)
 
 def extract_boxes(pdf_file, filename):
     extracted_rows = []
     with pdfplumber.open(pdf_file) as pdf:
         for page in pdf.pages:
+            page_width = page.width
+            page_height = page.height
             row = {"File": filename}
             for field, (x1_mm, x2_mm, y1_mm, y2_mm) in BOXES_MM.items():
-                bbox = mm_box_to_pdf_bbox(page.width, page.height, x1_mm, x2_mm, y1_mm, y2_mm)
+                bbox = mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
                 cropped = page.within_bbox(bbox)
                 text = cropped.extract_text()
                 row[field] = text.strip() if text else ""
@@ -102,17 +104,16 @@ def extract_boxes(pdf_file, filename):
 
 if st.button("Starta") and uploaded_files:
     status_placeholder.info("Körning pågår...")
+
     all_data = []
     progress_bar = st.progress(0)
+    total_files = len(uploaded_files)
+
     for i, file in enumerate(uploaded_files):
         all_data.extend(extract_boxes(file, file.name))
-        progress_bar.progress((i + 1) / len(uploaded_files))
+        progress_bar.progress((i + 1) / total_files)
 
     df = pd.DataFrame(all_data)
-
-    # Visa förhandsgranskning
-    st.markdown("### Förhandsvisning av extraherad data")
-    st.dataframe(df)
 
     wb = Workbook()
     ws = wb.active
@@ -122,23 +123,23 @@ if st.button("Starta") and uploaded_files:
     red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
     green_fill = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")
 
-    for _, row in df.iterrows():
-        ws.append([row[col] for col in df.columns])
+    for index, row in df.iterrows():
+        excel_row = [row[col] for col in df.columns]
+        ws.append(excel_row)
+
         for col in df.columns:
-            if col == "File":
-                continue
-            expected = expected_values.get(col, "").strip().lower()
+            expected = comparison_inputs.get(col, "").strip().lower()
             actual = str(row[col]).strip().lower()
             if expected:
                 cell = ws.cell(row=ws.max_row, column=df.columns.get_loc(col) + 1)
-                cell.fill = green_fill if expected == actual else red_fill
+                cell.fill = green_fill if actual == expected else red_fill
 
-        if not expected_values["NUMMER"]:
-            file_val = str(row["File"]).strip().lower().replace(".pdf", "")
-            nummer_val = str(row["NUMMER"]).strip().lower()
-            if file_val != nummer_val:
-                cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("NUMMER") + 1)
-                cell.fill = red_fill
+        # Extra comparison: filename vs NUMMER
+        file_val = str(row["File"]).strip().lower().replace(".pdf", "")
+        nummer_val = str(row["NUMMER"]).strip().lower()
+        if file_val != nummer_val:
+            cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("NUMMER") + 1)
+            cell.fill = red_fill
 
     output = BytesIO()
     wb.save(output)
@@ -150,4 +151,6 @@ if st.button("Starta") and uploaded_files:
         data=output,
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
     )
+
