@@ -1,22 +1,20 @@
+
 import streamlit as st
 import pdfplumber
 import pandas as pd
 from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
-import time
 
-st.title("Hämta ut och jämför info från rithuvud")
+st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
-v.1.20
+v.1.22
 """)
 
-# Constants
 MM_TO_PT = 2.83465
 
-# Koordinater för rithuvud
 BOXES_K2K3_MM = {
     "STATUS": (20, 110, 109, 122),
     "HANDLING": (20, 110, 100, 112),
@@ -109,11 +107,6 @@ if st.button("Starta") and uploaded_files:
         progress_bar.progress((i + 1) / len(uploaded_files))
 
     df = pd.DataFrame(all_data)
-
-    # Visa förhandsgranskning
-    st.markdown("### Förhandsvisning av extraherad data")
-    st.dataframe(df)
-
     wb = Workbook()
     ws = wb.active
     ws.title = "Metadata"
