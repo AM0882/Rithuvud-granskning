@@ -10,7 +10,7 @@ st.title("Hämta ut info från rithuvud")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
-v.1.18
+v.1.19
 """)
 
 # Constants
@@ -35,6 +35,42 @@ BOXES_K2K3_MM = {
     "BET": (14.7, 30, 10, 19)
 }
 
+BOXES_K1_MM = {
+    "STATUS": (30, 120, 121, 131),
+    "HANDLING": (30, 120, 111, 121),
+    "DATUM": (100, 120, 104, 109),
+    "ÄNDRING": (30, 100, 104, 109),
+    "PROJEKT": (20, 120, 84, 102),
+    "KONTAKTPERSON": (70, 120, 57, 62),
+    "SKAPAD AV": (20, 70, 57, 62),
+    "GODKÄND AV": (70, 120, 50, 55),
+    "UPPDRAGSNUMMER": (20, 70, 50, 55),
+    "RITNINGSKATEGORI": (38.6, 120, 43, 50),
+    "INNEHÅLL": (67, 120, 29, 43),
+    "FORMAT": (28.5, 41, 35, 42),
+    "SKALA": (28.5, 41, 28, 36),
+    "NUMMER": (49, 120, 18, 29.5),
+    "BET": (28.5, 41, 18, 29.6)
+}
+
+BOXES_K12_MM = {
+    "STATUS": (29.8, 119.8, 123, 133),
+    "HANDLING": (29.8, 119.8, 113, 123),
+    "DATUM": (93.5, 119.8, 106, 111),
+    "ÄNDRING": (29.8, 93.5, 106, 111),
+    "PROJEKT": (29, 119.8, 86, 106),
+    "KONTAKTPERSON": (69.8, 119.8, 59, 64),
+    "SKAPAD AV": (19.8, 69.8, 59, 64),
+    "GODKÄND AV": (69.8, 119.8, 52, 57),
+    "UPPDRAGSNUMMER": (19.8, 69.8, 52, 57),
+    "RITNINGSKATEGORI": (38.4, 119.8, 45, 52),
+    "INNEHÅLL": (66.8, 119.8, 31, 45),
+    "FORMAT": (28.3, 40.8, 37, 44),
+    "SKALA": (30.9, 40.8, 30, 38),
+    "NUMMER": (48.8, 119.8, 20, 31.5),
+    "BET": (28.3, 40.8, 20, 31.6)
+}
+
 # Välj koordinatsystem
 coordinate_option = st.selectbox(
     "Välj filstorlek för ritning",
@@ -44,9 +80,9 @@ coordinate_option = st.selectbox(
 if coordinate_option == "Helplan":
     BOXES_MM = BOXES_K2K3_MM
 elif coordinate_option == "A1":
-    BOXES_MM = BOXES_K2K3_MM
+    BOXES_MM = BOXES_K1_MM
 elif coordinate_option == "A1-5271":
-    BOXES_MM = BOXES_K2K3_MM
+    BOXES_MM = BOXES_K12_MM
 
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
 
@@ -125,3 +161,4 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
