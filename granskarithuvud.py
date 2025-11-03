@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pdfplumber
 import pandas as pd
@@ -11,10 +10,11 @@ st.title("Hämta ut info från rithuvud och granska")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet.  
-v.2.9
+v.2.10
 """)
 
 MM_TO_PT = 2.83465
+
 BOXES_K2K3_MM = {
     "STATUS": (20, 110, 109, 122),
     "HANDLING": (20, 110, 100, 112),
@@ -99,20 +99,20 @@ def extract_boxes(pdf_file, filename):
                 bbox = mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
                 cropped = page.within_bbox(bbox)
                 text = cropped.extract_text()
-                cleaned_text = text.strip() if text else ""
+                clean_text = text.strip() if text else ""
 
-                # Only keep digits in SKALA field
+                # Filter SKALA to only x:x format
                 if field == "SKALA":
-                    match = re.search(r"\d+", cleaned_text)
-                    cleaned_text = match.group(0) if match else ""
+                    match = re.search(r"\b\d+\s*:\s*\d+\b", clean_text)
+                    clean_text = match.group(0) if match else ""
 
-                row[field] = cleaned_text
+                row[field] = clean_text
 
             # Scan bottom 10% for scale pattern
             bottom_bbox = (0, page_height * 0.9, page_width, page_height)
             bottom_crop = page.within_bbox(bottom_bbox)
             bottom_text = bottom_crop.extract_text() if bottom_crop else ""
-            scale_matches = re.findall(r"1\s*:\s*\d+", bottom_text or "")
+            scale_matches = re.findall(r"\b1\s*:\s*\d+\b", bottom_text or "")
             row["Skalstock och skala"] = ", ".join(scale_matches) if scale_matches else ""
 
             extracted_rows.append(row)
@@ -150,7 +150,6 @@ if st.button("Starta") and uploaded_files:
                 cell = ws.cell(row=ws.max_row, column=df.columns.get_loc(col) + 1)
                 cell.fill = green_fill if actual == expected else red_fill
 
-        # Extra comparison: filename vs NUMMER
         file_val = str(row["File"]).strip().lower().replace(".pdf", "")
         nummer_val = str(row["NUMMER"]).strip().lower()
         if file_val != nummer_val:
