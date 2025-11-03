@@ -1,20 +1,20 @@
+
 import streamlit as st
 import pdfplumber
 import pandas as pd
 from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
-import time
 import re
+
 st.title("Hämta ut info från rithuvud och granska")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet.  
-v.2.8
+v.2.9
 """)
 
 MM_TO_PT = 2.83465
-
 BOXES_K2K3_MM = {
     "STATUS": (20, 110, 109, 122),
     "HANDLING": (20, 110, 100, 112),
@@ -75,7 +75,6 @@ BOXES_MM = BOXES_K2K3_MM if coordinate_option == "Helplan" else BOXES_K1_MM if c
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
 status_placeholder = st.empty()
 
-# Input fields for comparison
 st.subheader("Jämför med värden (valfritt)")
 comparison_inputs = {}
 for field in BOXES_MM.keys():
@@ -96,12 +95,18 @@ def extract_boxes(pdf_file, filename):
             page_height = page.height
             row = {"File": filename}
 
-            # Extract predefined boxes
             for field, (x1_mm, x2_mm, y1_mm, y2_mm) in BOXES_MM.items():
                 bbox = mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
                 cropped = page.within_bbox(bbox)
                 text = cropped.extract_text()
-                row[field] = text.strip() if text else ""
+                cleaned_text = text.strip() if text else ""
+
+                # Only keep digits in SKALA field
+                if field == "SKALA":
+                    match = re.search(r"\d+", cleaned_text)
+                    cleaned_text = match.group(0) if match else ""
+
+                row[field] = cleaned_text
 
             # Scan bottom 10% for scale pattern
             bottom_bbox = (0, page_height * 0.9, page_width, page_height)
@@ -162,9 +167,4 @@ if st.button("Starta") and uploaded_files:
         data=output,
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
     )
-
-
-
-
