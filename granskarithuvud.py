@@ -9,7 +9,7 @@ st.title("Hämta ut info från rithuvud och granska")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet.  
-v.2.1
+v.2.2
 """)
 
 MM_TO_PT = 2.83465
@@ -34,7 +34,7 @@ BOXES_K2K3_MM = {
 
 BOXES_K1_MM = {
     "STATUS": (30, 120, 121, 131),
-    "HANDLING": (30, 120, 111, 121),
+    "HANDLING": (30, 120, 110.5, 121),
     "DATUM": (100, 120, 104, 109),
     "ÄNDRING": (30, 100, 104, 109),
     "PROJEKT": (20, 120, 84, 102),
@@ -52,7 +52,7 @@ BOXES_K1_MM = {
 
 BOXES_K12_MM = {
     "STATUS": (29.8, 119.8, 123, 133),
-    "HANDLING": (29.8, 119.8, 113, 123),
+    "HANDLING": (29.8, 119.8, 112, 123),
     "DATUM": (93.5, 119.8, 106, 111),
     "ÄNDRING": (29.8, 93.5, 106, 111),
     "PROJEKT": (29, 119.8, 86, 106),
@@ -153,6 +153,7 @@ if st.button("Starta") and uploaded_files:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
     )
+
 
 
 
