@@ -5,11 +5,12 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 import time
+import re
 st.title("Hämta ut info från rithuvud och granska")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet.  
-v.2.7
+v.2.8
 """)
 
 MM_TO_PT = 2.83465
@@ -94,11 +95,21 @@ def extract_boxes(pdf_file, filename):
             page_width = page.width
             page_height = page.height
             row = {"File": filename}
+
+            # Extract predefined boxes
             for field, (x1_mm, x2_mm, y1_mm, y2_mm) in BOXES_MM.items():
                 bbox = mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm)
                 cropped = page.within_bbox(bbox)
                 text = cropped.extract_text()
                 row[field] = text.strip() if text else ""
+
+            # Scan bottom 10% for scale pattern
+            bottom_bbox = (0, page_height * 0.9, page_width, page_height)
+            bottom_crop = page.within_bbox(bottom_bbox)
+            bottom_text = bottom_crop.extract_text() if bottom_crop else ""
+            scale_matches = re.findall(r"1\s*:\s*\d+", bottom_text or "")
+            row["Skalstock och skala"] = ", ".join(scale_matches) if scale_matches else ""
+
             extracted_rows.append(row)
     return extracted_rows
 
@@ -153,6 +164,7 @@ if st.button("Starta") and uploaded_files:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
     )
+
 
 
 
