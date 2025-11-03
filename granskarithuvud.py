@@ -10,7 +10,7 @@ st.title("Hämta ut info från rithuvud och granska")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet.  
-v.2.10
+v.2.11
 """)
 
 MM_TO_PT = 2.83465
@@ -103,7 +103,7 @@ def extract_boxes(pdf_file, filename):
 
                 # Filter SKALA to only x:x format
                 if field == "SKALA":
-                    match = re.search(r"\b\d+\s*:\s*\d+\b", clean_text)
+                    match = re.search(r"\d+\s*:\s*\d+", clean_text)
                     clean_text = match.group(0) if match else ""
 
                 row[field] = clean_text
@@ -167,3 +167,4 @@ if st.button("Starta") and uploaded_files:
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
