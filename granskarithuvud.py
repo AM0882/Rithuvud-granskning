@@ -4,16 +4,18 @@ import pandas as pd
 from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
-import time
+import re
+
 st.title("Hämta ut info från rithuvud och granska")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet.  
-v.2.4
+v.2.5
 """)
 
 MM_TO_PT = 2.83465
 
+# Box definitions
 BOXES_K2K3_MM = {
     "STATUS": (20, 110, 109, 122),
     "HANDLING": (20, 110, 100, 112),
@@ -70,7 +72,6 @@ BOXES_K12_MM = {
 
 coordinate_option = st.selectbox("Välj filstorlek för ritning", ["Helplan", "A1", "A1-5271"])
 BOXES_MM = BOXES_K2K3_MM if coordinate_option == "Helplan" else BOXES_K1_MM if coordinate_option == "A1" else BOXES_K12_MM
-
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
 status_placeholder = st.empty()
 
@@ -87,6 +88,14 @@ def mm_box_to_pdf_bbox(page_width, page_height, x1_mm, x2_mm, y1_mm, y2_mm):
     y2_pt = page_height - y1_mm * MM_TO_PT
     return (x1_pt, y1_pt, x2_pt, y2_pt)
 
+def extract_scales_from_bottom(page):
+    height = page.height
+    width = page.width
+    bottom_bbox = (0, height * 0.9, width, height)
+    cropped = page.within_bbox(bottom_bbox)
+    text = cropped.extract_text() or ""
+    return re.findall(r"\b\d{1,4}:\d{1,4}\b", text)
+
 def extract_boxes(pdf_file, filename):
     extracted_rows = []
     with pdfplumber.open(pdf_file) as pdf:
@@ -99,6 +108,9 @@ def extract_boxes(pdf_file, filename):
                 cropped = page.within_bbox(bbox)
                 text = cropped.extract_text()
                 row[field] = text.strip() if text else ""
+            found_scales = extract_scales_from_bottom(page)
+            row["Skalstock funnen"] = ", ".join(found_scales)
+            row["Skalstock ok"] = "OK" if row["SKALA"] in found_scales else "FEL"
             extracted_rows.append(row)
     return extracted_rows
 
@@ -134,13 +146,16 @@ if st.button("Starta") and uploaded_files:
                 cell = ws.cell(row=ws.max_row, column=df.columns.get_loc(col) + 1)
                 cell.fill = green_fill if actual == expected else red_fill
 
-        # Extra comparison: filename vs NUMMER
+        # Compare filename vs NUMMER
         file_val = str(row["File"]).strip().lower().replace(".pdf", "")
         nummer_val = str(row["NUMMER"]).strip().lower()
         if file_val != nummer_val:
             cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("NUMMER") + 1)
             cell.fill = red_fill
-
+        # Color Skalstock ok
+        scale_status = row["Skalstock ok"]
+        cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("Skalstock ok") + 1)
+        cell.fill = green_fill if scale_status == "OK" else red_fill
     output = BytesIO()
     wb.save(output)
     output.seek(0)
@@ -151,11 +166,4 @@ if st.button("Starta") and uploaded_files:
         data=output,
         file_name="metadata_comparison.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
     )
-
-
-
-
-
-
