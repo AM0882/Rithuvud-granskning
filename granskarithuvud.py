@@ -10,7 +10,7 @@ st.title("Hämta ut info från rithuvud och granska")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet.  
-v.2.5
+v.2.6
 """)
 
 MM_TO_PT = 2.83465
@@ -72,6 +72,7 @@ BOXES_K12_MM = {
 
 coordinate_option = st.selectbox("Välj filstorlek för ritning", ["Helplan", "A1", "A1-5271"])
 BOXES_MM = BOXES_K2K3_MM if coordinate_option == "Helplan" else BOXES_K1_MM if coordinate_option == "A1" else BOXES_K12_MM
+
 uploaded_files = st.file_uploader("Ladda upp PDF", type="pdf", accept_multiple_files=True)
 status_placeholder = st.empty()
 
@@ -108,6 +109,12 @@ def extract_boxes(pdf_file, filename):
                 cropped = page.within_bbox(bbox)
                 text = cropped.extract_text()
                 row[field] = text.strip() if text else ""
+
+            # Clean SKALA to only keep valid numeric x:x format
+            raw_skala = row.get("SKALA", "")
+            match = re.search(r"\b\d{1,4}:\d{1,4}\b", raw_skala)
+            row["SKALA"] = match.group(0) if match else ""
+
             found_scales = extract_scales_from_bottom(page)
             row["Skalstock funnen"] = ", ".join(found_scales)
             row["Skalstock ok"] = "OK" if row["SKALA"] in found_scales else "FEL"
@@ -152,10 +159,12 @@ if st.button("Starta") and uploaded_files:
         if file_val != nummer_val:
             cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("NUMMER") + 1)
             cell.fill = red_fill
+
         # Color Skalstock ok
         scale_status = row["Skalstock ok"]
         cell = ws.cell(row=ws.max_row, column=df.columns.get_loc("Skalstock ok") + 1)
         cell.fill = green_fill if scale_status == "OK" else red_fill
+
     output = BytesIO()
     wb.save(output)
     output.seek(0)
