@@ -9,7 +9,7 @@ st.title("Hämta ut info från rithuvud och granska")
 
 st.markdown("""
 Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet.  
-v.2.3
+v.2.4
 """)
 
 MM_TO_PT = 2.83465
@@ -27,7 +27,7 @@ BOXES_K2K3_MM = {
     "RITNINGSKATEGORI": (28.6, 110, 33, 40),
     "INNEHÅLL": (57, 110, 19, 33),
     "FORMAT": (10, 30, 26, 31),
-    "SKALA": (16, 30, 19, 25.7),
+    "SKALA": (16, 30, 19, 26.5),
     "NUMMER": (39, 110, 10, 19),
     "BET": (14.7, 30, 10, 19)
 }
@@ -45,7 +45,7 @@ BOXES_K1_MM = {
     "RITNINGSKATEGORI": (38.6, 120, 43, 50),
     "INNEHÅLL": (67, 120, 29, 43),
     "FORMAT": (28.5, 41, 35, 42),
-    "SKALA": (27.5, 41, 28, 35.7),
+    "SKALA": (27.5, 41, 28, 36.5),
     "NUMMER": (49, 120, 18, 29.5),
     "BET": (28.5, 41, 18, 29.6)
 }
@@ -63,7 +63,7 @@ BOXES_K12_MM = {
     "RITNINGSKATEGORI": (38.4, 119.8, 45, 52),
     "INNEHÅLL": (66.8, 119.8, 31, 45),
     "FORMAT": (28.3, 40.8, 37, 44),
-    "SKALA": (29, 40.8, 30, 36.7),
+    "SKALA": (29, 40.8, 30, 37.5),
     "NUMMER": (48.8, 119.8, 20, 31.5),
     "BET": (28.3, 40.8, 20, 31.6)
 }
@@ -153,6 +153,7 @@ if st.button("Starta") and uploaded_files:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
     )
+
 
 
 
