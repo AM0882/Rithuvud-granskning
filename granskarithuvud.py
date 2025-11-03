@@ -8,7 +8,7 @@ import time
 st.title("Hämta ut info från rithuvud och granska")
 
 st.markdown("""
-Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet, baserat på ett specifikt projekt iykyk.  
+Ladda upp ritningar och exportera info i rithuvud. Jämför ritningsnummer med filnamn, och granskar egna värden. Fungerar bara om filer är plottade rätt så rithuvud inte är förskjutet.  
 v.2.1
 """)
 
@@ -153,5 +153,6 @@ if st.button("Starta") and uploaded_files:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
     )
+
 
 
